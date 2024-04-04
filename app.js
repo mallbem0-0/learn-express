@@ -1,30 +1,115 @@
 // Express 모듈을 불러옵니다.
-const express = require('express');
+const express = require('express'); // Express 모듈
+const morgan = require('morgan'); // morgan 미들웨어 -> HTTP 요처에 대한 로그 기록
+const cookieParser = require('cookie-parser') // cookieParser 미들웨어 -> 클라이언트가 보낸 쿠키 파싱
+const session = require('express-session') // express-session 미들웨어 -> 세션 관리
+const dotenv = require('dontenv'); // dotenv 라이브러리 -> 환경 변수 관리
+const path = require('path') // path 모듈 -> 파일 및 디렉토리 경로를 처리
 
-// path 모듈을 불러옵니다. 파일 및 디렉토리 경로를 처리하는 데 사용됩니다.
-const path= require ('path');
+dotenv.config(); // .env 파일의 환경 변수를 로드
 
-// Express 앱을 생성합니다.
-const app = express();
+const app = express(); // Express 앱을 생성합니다.
 
 // 앱의 포트를 설정합니다. 환경 변수에 포트가 지정되어 있지 않으면 3000번 포트를 사용합니다.
 app.set('port',process.env.PORT || 8080);
     // app.set(키, 값)에 데이터를 저장, 데이터를 app.get(키)로 가져올수 있음.
 
 // 루트 경로('/')로 GET 요청이 오면 index.html 파일을 클라이언트에게 전송합니다.
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '/index.html'));
-});
-    // app.get(주소, 라우터) -> 주소에 대한 GET요청이 올때 어떤 동작을 할지 적는 부분
-    // req -> 요청에 대한 정보가 들어 있는 객체
-    // res -> 응답에 대한 정보가 들어있는 객체
-    // res.sendFile() -> 클라이언트에게 파일을 전송하는 메서드
-    // path.join(_dirname, '/index.html') -> 서버의 디렉토리 경로와 'index.html' 파일의 상대 경로를 결합하여 전체 파일 경로를 생성
-    // __dirname -> 현재 스크립트가 위치한 디렉토리를 나타내는 Node.js 전역 변수
+
+app.use(morgan('dev'));
+
+app.use('/',express.static(path.join(__dirname, 'public')));
 
 
-// 앱이 설정한 포트에서 대기 상태로 시작됩니다.
-// 서버가 시작되면 해당 포트에서 대기 중 메세지를 로그에 출력합니다.
-app.listen(app.get('port'), () => {
-    console.log(app.get('port'), '번 포트에서 대기 중');
+app.use(express.join());
+
+app.use(express.urlencoded({}))
+
+app.use(cookieParser(process.env.COOKIE_SECRET));
+
+
+
+
+app.use(session({
+    resave: false,
+    saveUninitialized: false,
+    secret: process.env.COOKIE_SECRET,
+    cookie: {
+        http0nly: true,
+        secure: false,
+    },
+    name: 'session-cookie',
+}))
+
+
+
+
+
+
+
+
+
+const multer = require('multer')
+const fs = require('fs')
+
+
+try {
+
+    fs.readdirSync('uploads');
+} catch (error) {
+    console.error('uploads 폴더가 없어 uploads 폴더를 생성합니다.');
+
+    fs.mkdirSync('uploads')
+}
+
+const upload = multer({
+
+    storage: multer.diskStorage({
+        destination(req, file, done) {
+            done(null, 'uploads/');
+        },
+        filename(req, file, done) {
+
+            const ext = path.extname(file.originalname);
+
+            done(null, path.basename(file.originalname, ext) + Date.now() + ext);
+        },
+    }),
+    
+    limits: { fileSize: 5 * 1024 * 1024 },
 });
+
+
+app.get('/upload', (req,res) => {
+    res.sendFile(path.join(__dirname, 'multipart.himl'));
+});
+
+app.post('/upload', upload.single('image'), (req, res) => {
+
+
+    console.log(req.file);
+
+    res.send('ok');
+});
+
+
+
+app.use((req, res, next) => {
+    console.log('모든 요청에 다 실행됩니다.');
+    next();
+})
+
+app.get('/', (req, res, next) => {
+    console.log('GET / 요청에서만 실행됩니다.')
+    next();
+}, (req, res) => {
+    throw new Error('에러는 에러 처리 미들웨어로 갑니다.')
+})
+
+
+
+
+
+
+
+app.use((err, req, res, next))
