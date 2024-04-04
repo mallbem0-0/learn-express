@@ -3,7 +3,7 @@ const express = require('express'); // Express 모듈
 const morgan = require('morgan'); // morgan 미들웨어 -> HTTP 요처에 대한 로그 기록
 const cookieParser = require('cookie-parser') // cookieParser 미들웨어 -> 클라이언트가 보낸 쿠키 파싱
 const session = require('express-session') // express-session 미들웨어 -> 세션 관리
-const dotenv = require('dontenv'); // dotenv 라이브러리 -> 환경 변수 관리
+const dotenv = require('dotenv'); // dotenv 라이브러리 -> 환경 변수 관리
 const path = require('path') // path 모듈 -> 파일 및 디렉토리 경로를 처리
 
 dotenv.config(); // .env 파일의 환경 변수를 로드
@@ -11,7 +11,7 @@ dotenv.config(); // .env 파일의 환경 변수를 로드
 const app = express(); // Express 앱을 생성합니다.
 
 // 앱의 포트를 설정합니다. 환경 변수에 포트가 지정되어 있지 않으면 3000번 포트를 사용합니다.
-app.set('port',process.env.PORT || 8080);
+app.set('port',process.env.PORT || 9100);
     // app.set(키, 값)에 데이터를 저장, 데이터를 app.get(키)로 가져올수 있음.
 
 // 루트 경로('/')로 GET 요청이 오면 index.html 파일을 클라이언트에게 전송합니다.
@@ -21,9 +21,9 @@ app.use(morgan('dev'));
 app.use('/',express.static(path.join(__dirname, 'public')));
 
 
-app.use(express.join());
+app.use(express.json());
 
-app.use(express.urlencoded({}))
+app.use(express.urlencoded({ extended: false }));
 
 app.use(cookieParser(process.env.COOKIE_SECRET));
 
@@ -49,8 +49,8 @@ app.use(session({
 
 
 
-const multer = require('multer')
-const fs = require('fs')
+const multer = require('multer');
+const fs = require('fs');
 
 
 try {
@@ -59,7 +59,7 @@ try {
 } catch (error) {
     console.error('uploads 폴더가 없어 uploads 폴더를 생성합니다.');
 
-    fs.mkdirSync('uploads')
+    fs.mkdirSync('uploads');
 }
 
 const upload = multer({
@@ -81,7 +81,7 @@ const upload = multer({
 
 
 app.get('/upload', (req,res) => {
-    res.sendFile(path.join(__dirname, 'multipart.himl'));
+    res.sendFile(path.join(__dirname, 'multipart.html'));
 });
 
 app.post('/upload', upload.single('image'), (req, res) => {
@@ -93,11 +93,6 @@ app.post('/upload', upload.single('image'), (req, res) => {
 });
 
 
-
-app.use((req, res, next) => {
-    console.log('모든 요청에 다 실행됩니다.');
-    next();
-})
 
 app.get('/', (req, res, next) => {
     console.log('GET / 요청에서만 실행됩니다.')
@@ -112,4 +107,15 @@ app.get('/', (req, res, next) => {
 
 
 
-app.use((err, req, res, next))
+app.use((err, req, res, next) => {
+    console.error(err);
+    res.status(500).send(err.message);
+})
+
+
+
+
+
+app.listen(app.get('port'), () => {
+    console.log(app.get('port'), '번 포트에서 대기 중');
+});

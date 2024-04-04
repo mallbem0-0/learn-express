@@ -8,7 +8,7 @@ const path= require ('path');
 const app = express();
 
 // 앱의 포트를 설정합니다. 환경 변수에 포트가 지정되어 있지 않으면 3000번 포트를 사용합니다.
-app.set('port',process.env.PORT || 8080);
+app.set('port',process.env.PORT || 9100);
     // app.set(키, 값)에 데이터를 저장, 데이터를 app.get(키)로 가져올수 있음.
 
 // 루트 경로('/')로 GET 요청이 오면 index.html 파일을 클라이언트에게 전송합니다.
